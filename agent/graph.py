@@ -23,5 +23,6 @@ def build_graph():
     graph.add_conditional_edges(
         'call_model', should_tool_call,
     )
+    graph.add_edge('tool_call', 'call_model')
 
     return graph

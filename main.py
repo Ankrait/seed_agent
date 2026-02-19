@@ -9,11 +9,16 @@ def main():
 
 if __name__ == "__main__":
     graph = build_graph()
-    result = graph.compile().invoke({
-        "messages": [
-            SystemMessage(f'Ты агент по погоде. Сегодня 19.02.2026'),
-            HumanMessage(f'Какая погода сегодня в Казани?')
-        ]
-    })
+    result = graph.compile().stream(
+        {
+            "messages": [
+                SystemMessage(f'Ты агент по погоде. Сегодня 19.02.2026'),
+                HumanMessage(f'Какая погода сегодня в Казани?')
+            ],
+        },
+        stream_mode="updates"
+    )
 
-    print(result)
+    for chunk in result:
+        if chunk.get('call_model'):
+            print(chunk.get('call_model').get('messages')[0].content)
