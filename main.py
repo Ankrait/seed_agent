@@ -4,10 +4,6 @@ from agent.graph import build_graph
 
 
 def main():
-    print("Hello from seed-agent!")
-
-
-if __name__ == "__main__":
     graph = build_graph()
     result = graph.compile().stream(
         {
@@ -22,3 +18,7 @@ if __name__ == "__main__":
     for chunk in result:
         if chunk.get('call_model'):
             print(chunk.get('call_model').get('messages')[0].content)
+
+
+if __name__ == "__main__":
+    main()

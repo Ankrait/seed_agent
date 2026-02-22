@@ -20,9 +20,9 @@ def build_graph():
     graph.add_node('tool_call', ToolNode([get_weather]))
 
     graph.add_edge(START, 'call_model')
-    graph.add_conditional_edges(
-        'call_model', should_tool_call,
-    )
     graph.add_edge('tool_call', 'call_model')
+    graph.add_conditional_edges(
+        'call_model', should_tool_call, ['tool_call', END]
+    )
 
     return graph
