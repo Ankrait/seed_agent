@@ -1,23 +1,30 @@
 from langchain_core.messages import SystemMessage, HumanMessage
+from langgraph.checkpoint.memory import InMemorySaver
 
 from agent.graph import build_graph
 
 
 def main():
-    graph = build_graph()
-    result = graph.compile().stream(
-        {
-            "messages": [
-                SystemMessage(f'Ты агент по погоде. Сегодня 19.02.2026'),
-                HumanMessage(f'Какая погода сегодня в Казани?')
-            ],
-        },
-        stream_mode="updates"
-    )
+    memory = InMemorySaver()
+    agent = build_graph().compile(checkpointer=memory)
 
-    for chunk in result:
-        if chunk.get('call_model'):
-            print(chunk.get('call_model').get('messages')[0].content)
+    while True:
+        user = input('\nВы: ')
+        if user.lower() == 'exit' or user.lower() == 'выход':
+            break
+
+        config = {'configurable': {'thread_id': 'temp'}}
+        answer = agent.invoke(
+            {
+                "messages": [
+                    SystemMessage(f'Ты агент по погоде. Сегодня 19.02.2026'),
+                    HumanMessage(user)
+                ]
+            },
+            config
+        )
+
+        print(answer)
 
 
 if __name__ == "__main__":

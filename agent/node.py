@@ -1,6 +1,6 @@
 from agent.state import State
 from agent.tools import get_weather
-from llm.openai import llm
+from llm.deepseek import llm
 
 
 def call_model(state: State):
