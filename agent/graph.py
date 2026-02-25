@@ -1,30 +1,28 @@
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 
-from agent.node import add_wish, final_stage, get_first_wish
+from agent.node import call_model
 from agent.state import State
-from agent.tools import tools
+from agent.tools import get_weather
 
 
-def should_continue(state: State):
-    if len(state['wish_history']) < 5:
-        return 'add_wish'
+def should_tool_call(state: State):
+    if state['messages'][-1].tool_calls:
+        return 'tool_call'
     else:
-        return 'final_stage'
+        return END
 
 
 def build_graph():
     graph = StateGraph(State)
 
-    graph.add_node('get_first_wish', get_first_wish)
-    graph.add_node('add_wish', add_wish)
-    graph.add_node('final_stage', final_stage)
+    graph.add_node('call_model', call_model)
+    graph.add_node('tool_call', ToolNode([get_weather]))
 
-    graph.add_edge(START, 'get_first_wish')
-    graph.add_edge('get_first_wish', 'add_wish')
+    graph.add_edge(START, 'call_model')
+    graph.add_edge('tool_call', 'call_model')
     graph.add_conditional_edges(
-        'add_wish', should_continue, ['add_wish', 'final_stage']
+        'call_model', should_tool_call, ['tool_call', END]
     )
-    graph.add_edge('final_stage', END)
 
     return graph
