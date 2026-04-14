@@ -32,7 +32,7 @@ all_tools = [search_sub_agent] + built_in_tools
 SUBAGENT_INSTRUCTIONS = SUBAGENT_USAGE_INSTRUCTIONS.format(
     max_concurrent_research_units=3,
     max_researcher_iterations=3,
-    date=datetime.now().strftime("%a %b %-d, %Y"),
+    date=datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
 )
 
 INSTRUCTIONS = (
