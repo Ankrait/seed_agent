@@ -1,7 +1,10 @@
+import asyncio
+
 from langchain_core.messages import SystemMessage, HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from agent.graph import build_graph
+from agent.state import Stage
 
 step = 1
 
@@ -13,17 +16,17 @@ def print_chunk_message(chunk):
     if meta['langgraph_step'] != step:
         step = meta['langgraph_step']
         print('\n\nАгент:', end='', flush=False)
-        if meta['langgraph_node'] == 'tool_call':
+        if meta['langgraph_node'] == Stage.READ_PROJECT_TOOL:
             print('*Вызов функции*', end='', flush=False)
 
-    if message.content and meta['langgraph_node'] == 'call_model':
+    if message.content and meta['langgraph_node'] == Stage.CREATE_PLAN:
         print(message.content, end='', flush=False)
 
 
 def main():
     memory = InMemorySaver()
     agent = build_graph().compile(
-        checkpointer=memory, interrupt_before=['tool_call']
+        checkpointer=memory, interrupt_before=[Stage.READ_PROJECT_TOOL]
     )
 
     def run(state: dict | None, config: dict):
@@ -35,9 +38,9 @@ def main():
             current_state = agent.get_state(config)
 
             if chunk_type == 'updates':
-                if chunk_data.get('call_model'):
+                if chunk_data.get(Stage.CREATE_PLAN):
                     pass
-                if chunk_data.get('__interrupt__') == () and current_state.next == ('tool_call',):
+                if chunk_data.get('__interrupt__') == () and current_state.next == (Stage.READ_PROJECT_TOOL,):
                     tool_call = (
                         current_state.values
                         .get('messages')[-1].tool_calls[0]
@@ -71,5 +74,12 @@ def main():
         )
 
 
+async def test():
+    agent = build_graph().compile()
+    res = await agent.ainvoke({})
+    print(res.get('message')[-1])
+
+
 if __name__ == "__main__":
-    main()
+    # main()
+    asyncio.run(test())
