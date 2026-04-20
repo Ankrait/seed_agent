@@ -23,7 +23,7 @@ from agent.state import DeepAgentState
 from llm.deepseek import llm
 from config import config
 
-tavily_client = TavilyClient(api_key=config.tavily_api_key)
+# tavily_client = TavilyClient(api_key=config.tavily_api_key, )
 
 
 class Summary(BaseModel):
@@ -54,14 +54,9 @@ def run_tavily_search(
     Returns:
         Search results dictionary
     """
-    result = tavily_client.search(
-        search_query,
-        max_results=max_results,
-        include_raw_content=include_raw_content,
-        topic=topic
-    )
+    result = llm.invoke([HumanMessage(search_query)])
 
-    return result
+    return result.content
 
 
 def summarize_webpage_content(webpage_content: str) -> Summary:
@@ -189,49 +184,48 @@ def tavily_search(
         include_raw_content=True,
     )
 
-    # Process and summarize results
-    processed_results = process_search_results(search_results)
+#     # Process and summarize results
+#     processed_results = process_search_results(search_results)
 
-    # Save each result to a file and prepare summary
-    files = state.get("files", {})
-    saved_files = []
-    summaries = []
+#     # Save each result to a file and prepare summary
+#     files = state.get("files", {})
+#     saved_files = []
+#     summaries = []
 
-    for i, result in enumerate(processed_results):
-        # Use the AI-generated filename from summarization
-        filename = result['filename']
+#     for i, result in enumerate(processed_results):
+#         # Use the AI-generated filename from summarization
+#         filename = result['filename']
 
-        # Create file content with full details
-        file_content = f"""# Search Result: {result['title']}
+#         # Create file content with full details
+#         file_content = f"""# Search Result: {result['title']}
 
-**URL:** {result['url']}
-**Query:** {query}
-**Date:** {get_today_str()}
+# **URL:** {result['url']}
+# **Query:** {query}
+# **Date:** {get_today_str()}
 
-## Summary
-{result['summary']}
+# ## Summary
+# {result['summary']}
 
-## Raw Content
-{result['raw_content'] if result['raw_content'] else 'No raw content available'}
-"""
+# ## Raw Content
+# {result['raw_content'] if result['raw_content'] else 'No raw content available'}
+# """
 
-        files[filename] = file_content
-        saved_files.append(filename)
-        summaries.append(f"- {filename}: {result['summary']}...")
+#         files[filename] = file_content
+#         saved_files.append(filename)
+#         summaries.append(f"- {filename}: {result['summary']}...")
 
-    # Create minimal summary for tool message - focus on what was collected
-    summary_text = f"""🔍 Found {len(processed_results)} result(s) for '{query}':
+#     # Create minimal summary for tool message - focus on what was collected
+#     summary_text = f"""🔍 Found {len(processed_results)} result(s) for '{query}':
 
-{chr(10).join(summaries)}
+# {chr(10).join(summaries)}
 
-Files: {', '.join(saved_files)}
-💡 Use read_file() to access full details when needed."""
+# Files: {', '.join(saved_files)}
+# 💡 Use read_file() to access full details when needed."""
 
     return Command(
         update={
-            "files": files,
             "messages": [
-                ToolMessage(summary_text, tool_call_id=tool_call_id)
+                ToolMessage(search_results, tool_call_id=tool_call_id)
             ],
         }
     )
